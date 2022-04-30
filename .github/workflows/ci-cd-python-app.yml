@@ -5,9 +5,9 @@ name: CI/CD Workflow
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   build:
@@ -78,7 +78,7 @@ jobs:
     
     env:
       PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-      GKE_CLUSTER: cluster-1    # TODO: update to cluster name
+      GKE_CLUSTER: cluster-143e    # TODO: update to cluster name
       GKE_ZONE: us-central1-c	   # TODO: update to cluster zone
 
     steps:
