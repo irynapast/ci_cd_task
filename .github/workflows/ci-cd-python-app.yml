@@ -79,7 +79,7 @@ jobs:
     env:
       PROJECT_ID: ${{ secrets.GKE_PROJECT }}
       GKE_CLUSTER: cluster-1    # TODO: update to cluster name
-      GKE_ZONE: us-central1	   # TODO: update to cluster zone
+      GKE_ZONE: us-central1-f	   # TODO: update to cluster zone
 
     steps:
     - name: Check out code
