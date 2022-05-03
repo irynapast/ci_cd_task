@@ -98,6 +98,7 @@ jobs:
           cat kustomization.yaml
       - name: Deploy the first application
         run: |
+          cd k8s
           kubectl apply -f app-v1.yaml
           code=`curl $(minikube service my-app --url)`
           if [ $code -eq "200" ]
