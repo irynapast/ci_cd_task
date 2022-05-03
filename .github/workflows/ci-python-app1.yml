@@ -1,69 +1,162 @@
-name: CI Workflow1
-
-on:
+name: CI/CD Workflow
+'on':
   push:
-    branches: [ main ]
+    branches:
+      - master
   pull_request:
-    branches: [ main ]
-
+    branches:
+      - master
 jobs:
   build:
-
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./app
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-      
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v2
-      with:
-        python-version: "3.10"
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    
-    - name: Test with pytest
-      run: |
-        pytest
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Lint with flake8
+        run: >
+          # stop the build if there are Python syntax errors or undefined names
 
-    - name: Set up Docker Buildx
-      id: buildx
-      uses: docker/setup-buildx-action@v1
-      
-    - name: Cache Docker layers
-      uses: actions/cache@v2
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
-    
-    - uses: docker/login-action@v1 
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-      
-    - name: Build and push
-      uses: docker/build-push-action@v2
-      with:
-        context: ./app 
-        file: ./app/Dockerfile
-        builder: ${{ steps.buildx.outputs.name }}
-        push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/hello-gitops:${{ github.sha }}, ${{ secrets.DOCKER_USERNAME }}/hello-gitops:latest
-        cache-from: type=local,src=/tmp/.buildx-cache
-        cache-to: type=local,dest=/tmp/.buildx-cache
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+          # exit-zero treats all errors as warnings. The GitHub editor is 127
+          chars wide
+
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127
+          --statistics
+      - name: Test with pytest
+        run: |
+          pytest
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: '${{ runner.os }}-buildx-${{ github.sha }}'
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      - uses: docker/login-action@v1
+        with:
+          username: '${{ secrets.DOCKER_USERNAME }}'
+          password: '${{ secrets.DOCKER_PASSWORD }}'
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./app
+          file: ./app/Dockerfile
+          builder: '${{ steps.buildx.outputs.name }}'
+          push: true
+          tags: >-
+            ${{ secrets.DOCKER_USERNAME }}/hello-gitops:${{ github.sha }}, ${{
+            secrets.DOCKER_USERNAME }}/hello-gitops:latest
+          cache-from: 'type=local,src=/tmp/.buildx-cache'
+          cache-to: 'type=local,dest=/tmp/.buildx-cache'
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      PROJECT_ID: '${{ secrets.GKE_PROJECT }}'
+      GKE_CLUSTER: cluster-1
+      GKE_ZONE: us-central1-a
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v1
+        with:
+          kustomize-version: 3.6.1
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+      - name: Get the GKE credentials so we can deploy to the cluster
+        run: >
+          gcloud container clusters get-credentials "$GKE_CLUSTER" --zone
+          "$GKE_ZONE"
+      - name: Update Kubernetes resources
+        env:
+          DOCKER_USERNAME: '${{ secrets.DOCKER_USERNAME }}'
+        run: >
+          cd k8s
+
+          kustomize edit set image
+          hello-gitops=$DOCKER_USERNAME/hello-gitops:$GITHUB_SHA
+
+          cat kustomization.yaml
+      - name: Deploy the first application
+        run: |
+          kubectl apply -f app-v1.yaml
+          code=`curl $(minikube service my-app --url)`
+          if [ $code -eq "200" ]
+          then
+              echo "SUCCESS"
+          else
+              echo "FAILURE"
+              exit 1
+          fi
+      - name: Deploy the second application
+        run: >
+          kubectl apply -f app-v2.yaml
+
+          code=`curl $(minikube service my-app --url)`
+
+          if [ $code -eq "200" ]
+          then
+              echo "SUCCESS"
+          else
+              echo "FAILURE"
+              exit 1
+          fi
+
+          rolloutstatus=`kubectl rollout status deploy my-app-v2 -w`
+
+          if [ $rolloutstatus  -eq "deployment "my-app-v2" successfully rolled
+          out" ]
+          then
+              echo "SUCCESS"
+          else
+              echo "FAILURE"
+              exit 1
+          fi
+
+          kubectl patch service my-app -p
+          '{"spec":{"selector":{"version":"v2.0.0"}}}'
+
+          service=$(minikube service my-app --url)
+
+          while sleep 0.1; do code=`curl "$service"`; done
+
+          if [ $code -eq "200" ]
+          then
+              echo "SUCCESS"
+              kubectl delete deploy my-app-v1
+          else
+              echo "FAILURE"
+              kubectl patch service my-app -p '{"spec":{"selector":{"version":"v1.0.0"}}}'
+              exit 1
+          fi
+      - name: Commit files
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -am "Bump docker tag"
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: '${{ secrets.GITHUB_TOKEN }}'
