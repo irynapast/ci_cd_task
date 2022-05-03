@@ -110,6 +110,7 @@ jobs:
           # fi
       - name: Deploy the second application
         run: |
+          cd k8s
           kubectl apply -f app-v2.yaml
 
           # code=`curl $(minikube service my-app --url)`
