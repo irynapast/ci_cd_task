@@ -96,8 +96,6 @@ jobs:
           cd k8s
           kustomize edit set image hello-gitops=$DOCKER_USERNAME/hello-gitops:$GITHUB_SHA
           cat kustomization.yaml
-          app-v1 edit set image hello-gitops=$DOCKER_USERNAME/hello-gitops:$GITHUB_SHA
-          cat app-v1.yaml
       - name: Deploy the first application
         run: |
           cd k8s
