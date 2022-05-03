@@ -92,7 +92,7 @@ jobs:
       - name: Update Kubernetes resources
         env:
           DOCKER_USERNAME: '${{ secrets.DOCKER_USERNAME }}'
-        run: >
+        run: |
           cd k8s
 
           kustomize edit set image
@@ -111,7 +111,7 @@ jobs:
               exit 1
           fi
       - name: Deploy the second application
-        run: >
+        run: |
           kubectl apply -f app-v2.yaml
 
           code=`curl $(minikube service my-app --url)`
