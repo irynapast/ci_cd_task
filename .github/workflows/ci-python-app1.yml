@@ -133,8 +133,7 @@ jobs:
               # exit 1
           # fi
 
-          kubectl patch service my-app -p
-          '{"spec":{"selector":{"version":"v2.0.0"}}}'
+          kubectl patch service my-app -p '{"spec":{"selector":{"version":"v2.0.0"}}}'
 
           service=$(minikube service my-app --url)
 
