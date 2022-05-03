@@ -134,21 +134,18 @@ jobs:
           # fi
 
           kubectl patch service my-app -p '{"spec":{"selector":{"version":"v2.0.0"}}}'
-
           service=$(minikube service my-app --url)
-
           # while sleep 0.1; do code=`curl "$service"`; done 
           while sleep 0.1; do curl "$service"; done
-
-          if [ $code -eq "200" ]
-          then
-              echo "SUCCESS"
-              kubectl delete deploy my-app-v1
-          else
-              echo "FAILURE"
-              kubectl patch service my-app -p '{"spec":{"selector":{"version":"v1.0.0"}}}'
-              exit 1
-          fi
+          # if [ $code -eq "200" ]
+          # then
+              # echo "SUCCESS"
+              # kubectl delete deploy my-app-v1
+          # else
+              # echo "FAILURE"
+              # kubectl patch service my-app -p '{"spec":{"selector":{"version":"v1.0.0"}}}'
+              # exit 1
+          # fi
       - name: Commit files
         run: |
           git config --local user.email "action@github.com"
