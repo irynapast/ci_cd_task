@@ -132,7 +132,9 @@ jobs:
               # echo "FAILURE"
               # exit 1
           # fi
-
+          
+      - name: Patch v2
+        run: |
           kubectl patch service my-app -p '{"spec":{"selector":{"version":"v2.0.0"}}}'
           service=$(minikube service my-app --url)
           # while sleep 0.1; do code=`curl "$service"`; done 
