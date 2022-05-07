@@ -122,7 +122,6 @@ jobs:
               # echo "FAILURE"
               # exit 1
           # fi
-
           rolloutstatus=`kubectl rollout status deploy my-app-v2 -w`
 
           # if [ $rolloutstatus  -eq "deployment "my-app-v2" successfully rolled out" ]
