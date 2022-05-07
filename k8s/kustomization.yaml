@@ -8,4 +8,4 @@ namespace: python-app-blue
 images:
 - name: hello-gitops
   newName: irynapast/hello-gitops
-  newTag: 481b1200e650a110445b5a106349727a431561d0
+  newTag: 72b7e5e9814edb29ce041625e07516756d8b1af8
