@@ -123,13 +123,13 @@ jobs:
               # exit 1
           # fi
           rolloutstatus=`kubectl rollout status deploy my-app-v2 -w`
-          # if [ $rolloutstatus  -eq "deployment "my-app-v2" successfully rolled out" ]
-          # then
-              # echo "SUCCESS"
-          # else
-              # echo "FAILURE"
-              # exit 1
-          # fi
+          if [ $rolloutstatus  -eq "deployment "my-app-v2" successfully rolled out" ]
+          then
+              echo "SUCCESS"
+          else
+              echo "FAILURE"
+              exit 1
+          fi
           
       - name: Patch v2
         run: |
