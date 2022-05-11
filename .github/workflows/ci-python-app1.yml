@@ -139,6 +139,7 @@ jobs:
           kubectl patch service my-app -p '{"spec":{"selector":{"version":"v2.0.0"}}}'
           # service=$(minikube service my-app --url)
           while sleep 0.1; do code=`curl "$service"`; done 
+          
           echo $code
           # while sleep 0.1; do curl "$service"; done
           # if [ $code -eq "200" ]
