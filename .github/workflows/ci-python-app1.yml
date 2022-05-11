@@ -100,7 +100,7 @@ jobs:
         run: |
           cd k8s
           kubectl apply -f app-v1.yaml
-          code=curl $(minikube service my-app --url)
+          code=`curl $(minikube service my-app --url)`
           echo $code
           # if [ $code -eq 200 ]
           # then
