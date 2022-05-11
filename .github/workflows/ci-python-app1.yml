@@ -100,8 +100,8 @@ jobs:
         run: |
           cd k8s
           kubectl apply -f app-v1.yaml
-          code=`curl $(minikube service my-app --url)`
-          echo $code
+          #code=`curl $(minikube service my-app --url)`
+          #echo $code
           # if [ $code -eq 200 ]
           # then
               # echo "SUCCESS"
@@ -124,6 +124,7 @@ jobs:
               # exit 1
           # fi
           rolloutstatus=`kubectl rollout status deploy my-app-v2 -w`
+          echo $rolloutstatus
           #if [[ "$rolloutstatus" == "Waiting for deployment "my-app-v2" rollout to finish: 0 of 3 updated replicas are available... Waiting for deployment "my-app-v2" rollout to finish: 1 of 3 updated replicas are available... Waiting for deployment "my-app-v2" rollout to finish: 2 of 3 updated replicas are available... deployment "my-app-v2" successfully rolled out" ]]
           #then
               #echo "SUCCESS"
@@ -137,7 +138,8 @@ jobs:
         run: |
           kubectl patch service my-app -p '{"spec":{"selector":{"version":"v2.0.0"}}}'
           # service=$(minikube service my-app --url)
-          # while sleep 0.1; do code=`curl "$service"`; done 
+          while sleep 0.1; do code=`curl "$service"`; done 
+          echo $code
           # while sleep 0.1; do curl "$service"; done
           # if [ $code -eq "200" ]
           # then
