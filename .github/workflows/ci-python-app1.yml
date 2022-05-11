@@ -122,7 +122,7 @@ jobs:
               # echo "FAILURE"
               # exit 1
           # fi
-          rolloutstatus=`wait kubectl rollout status deploy my-app-v2 -w`
+          rolloutstatus=`kubectl rollout status deploy my-app-v2 -w`
           if [ $rolloutstatus == "deployment "my-app-v2" successfully rolled out" ]
           then
               echo "SUCCESS"
